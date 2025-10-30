@@ -5,7 +5,17 @@ from typing import Dict, List, Optional, Tuple
 import pandas as pd
 
 
-def load_and_prepare_players(csv_path: Path) -> pd.DataFrame:
+def normalize_weights(win_weight: float, homework_weight: float) -> Tuple[float, float]:
+    """Normalise weights to sum to 1, ensuring they remain positive."""
+    total = win_weight + homework_weight
+    if total <= 0:
+        raise ValueError("Win and homework weights must sum to a positive value.")
+    return win_weight / total, homework_weight / total
+
+
+def load_and_prepare_players(
+    csv_path: Path, win_weight: float, homework_weight: float
+) -> pd.DataFrame:
     """Load player data, normalise numeric fields, and compute derived metrics."""
     df = pd.read_csv(csv_path)
     df.columns = df.columns.str.strip()
@@ -31,7 +41,7 @@ def load_and_prepare_players(csv_path: Path) -> pd.DataFrame:
         total_homework.replace(0, pd.NA)
     ).fillna(0)
 
-    df["rating"] = ((0.7 * win_rate) + (0.3 * homework_score)).round(3)
+    df["rating"] = ((win_weight * win_rate) + (homework_weight * homework_score)).round(3)
     df["color_diff"] = (
         df["# Times Played White"] - df["# Times Played Black"]
     )
@@ -150,12 +160,21 @@ def build_output_rows(
 
 
 def generate_pairings(
-    input_csv: Path, output_csv: Path, seed: Optional[int] = None
+    input_csv: Path,
+    output_csv: Path,
+    seed: Optional[int] = None,
+    win_weight: float = 0.7,
+    homework_weight: float = 0.3,
 ) -> Dict[str, Optional[str]]:
     """Run the pairing pipeline and return summary statistics."""
     rng = random.Random(seed)
 
-    players = load_and_prepare_players(input_csv)
+    normalized_win_weight, normalized_homework_weight = normalize_weights(
+        win_weight, homework_weight
+    )
+    players = load_and_prepare_players(
+        input_csv, normalized_win_weight, normalized_homework_weight
+    )
     matches, unpaired_indices = select_pairings(players, rng)
     output_df = build_output_rows(players, matches, unpaired_indices)
 
@@ -180,4 +199,6 @@ def generate_pairings(
         "matches": match_count,
         "unpaired_name": unpaired_name,
         "unpaired_rating": unpaired_rating,
+        "win_weight": normalized_win_weight,
+        "homework_weight": normalized_homework_weight,
     }

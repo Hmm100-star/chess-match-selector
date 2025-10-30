@@ -22,13 +22,15 @@ Command-Line Usage
 ------------------
 - Install dependencies: `pip install -r requirements.txt`.
 - Run the selector: `python chess_match_selector.py --input Student_Information.csv --output next_matches.csv`.
-- Optional: add `--seed 123` for repeatable random pairing.
+- Optional flags:
+  - `--seed 123` for repeatable random pairing.
+  - `--win-weight 0.7` and `--homework-weight 0.3` to rebalance the rating calculation (values are normalised automatically).
 
 Flask Web App (Local)
 ---------------------
 - Export `FLASK_APP=app.py` (if needed) and install dependencies.
 - Start with `flask run` or `python app.py`.
-- Visit `http://localhost:5000`, upload `Student_Information.csv`, then download `next_matches.csv`.
+- Visit `http://localhost:5000`, upload `Student_Information.csv`, adjust the weighting inputs if desired, then download `next_matches.csv`. The app shows a summary including the weights used.
 
 Render Deployment
 -----------------

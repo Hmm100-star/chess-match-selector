@@ -25,6 +25,18 @@ def parse_arguments() -> argparse.Namespace:
         default=None,
         help="Optional random seed to make pairing selection reproducible.",
     )
+    parser.add_argument(
+        "--win-weight",
+        type=float,
+        default=0.7,
+        help="Weight assigned to win/loss performance when computing strength.",
+    )
+    parser.add_argument(
+        "--homework-weight",
+        type=float,
+        default=0.3,
+        help="Weight assigned to homework accuracy when computing strength.",
+    )
     return parser.parse_args()
 
 
@@ -35,7 +47,13 @@ def main() -> None:
     input_path = Path(args.input)
     output_path = Path(args.output)
 
-    summary = generate_pairings(input_path, output_path, args.seed)
+    summary = generate_pairings(
+        input_path,
+        output_path,
+        seed=args.seed,
+        win_weight=args.win_weight,
+        homework_weight=args.homework_weight,
+    )
 
     print(f"Processed {summary['total_players']} players.")
     print(f"Created {summary['matches']} matches.")
@@ -46,6 +64,10 @@ def main() -> None:
     else:
         print("Unpaired: None")
 
+    print(
+        "Weights used -> Wins: "
+        f"{summary['win_weight']:.3f}, Homework: {summary['homework_weight']:.3f}"
+    )
     print(f"Exported {output_path.name} successfully.")
 
 

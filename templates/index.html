@@ -89,6 +89,25 @@
     <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
       <label for="file">Upload your Student_Information.csv file:</label>
       <input type="file" id="file" name="file" accept=".csv" required />
+      <label for="win_weight">Win performance weight (any non-negative number):</label>
+      <input
+        type="number"
+        id="win_weight"
+        name="win_weight"
+        min="0"
+        step="0.01"
+        value="{{ win_weight }}"
+      />
+      <label for="homework_weight">Homework accuracy weight (any non-negative number):</label>
+      <input
+        type="number"
+        id="homework_weight"
+        name="homework_weight"
+        min="0"
+        step="0.01"
+        value="{{ homework_weight }}"
+      />
+      <small>Weights are automatically normalised, so 0.7/0.3 or 70/30 both work.</small>
       <button type="submit">Generate Pairings</button>
     </form>
 
