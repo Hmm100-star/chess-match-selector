@@ -6,6 +6,7 @@ Overview
 - Calculates player strength and colour balance from `Student_Information.csv`.
 - Generates fair next-round pairings while keeping colours balanced.
 - Provides both a command-line script and a Flask web interface for uploads.
+- Web UI includes quick links to the input template, sample output, and GitHub repository.
 - Inputs should be in this format as a .csv file: https://docs.google.com/spreadsheets/d/1kJKOxY_5oYmAcgvMtz_e9llXeYifauULxCitCE9vAQM/edit?usp=sharing 
 - Output will look like: https://docs.google.com/spreadsheets/d/1-yRVcTHes2QIS2x6wMTnXj-ONyKOT50CcB9WxviX3rw/edit?usp=sharing
 - The app is currently on Render at: https://chess-match-selector.onrender.com/ 

@@ -15,6 +15,13 @@ SUMMARY_FILE = OUTPUTS_DIR / "summary.txt"
 
 DEFAULT_WIN_WEIGHT = 0.7
 DEFAULT_HOMEWORK_WEIGHT = 0.3
+INPUT_TEMPLATE_URL = (
+    "https://docs.google.com/spreadsheets/d/1kJKOxY_5oYmAcgvMtz_e9llXeYifauULxCitCE9vAQM/edit?usp=sharing"
+)
+OUTPUT_SAMPLE_URL = (
+    "https://docs.google.com/spreadsheets/d/1-yRVcTHes2QIS2x6wMTnXj-ONyKOT50CcB9WxviX3rw/edit?usp=sharing"
+)
+GITHUB_URL = "https://github.com/Hmm100-star/chess-match-selector"
 
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -43,6 +50,9 @@ def build_context(**overrides: Union[str, float, bool, None]) -> dict:
         "homework_weight": DEFAULT_HOMEWORK_WEIGHT,
         "error": None,
         "success": None,
+        "input_template_url": INPUT_TEMPLATE_URL,
+        "output_sample_url": OUTPUT_SAMPLE_URL,
+        "github_url": GITHUB_URL,
     }
     context.update(overrides)
     return context
