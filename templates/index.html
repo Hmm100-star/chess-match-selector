@@ -1,165 +1,182 @@
 <!doctype html>
-<html lang="en">
+<html
+  lang="en"
+  class="h-full bg-gray-100 transition-colors duration-300 dark:bg-gray-900"
+>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Chess Match Pairing</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 2rem auto;
-        max-width: 700px;
-        line-height: 1.6;
-        color: #222;
-      }
-      h1 {
-        text-align: center;
-      }
-      form {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background-color: #f9f9f9;
-      }
-      input[type="file"] {
-        padding: 0.5rem;
-      }
-      button {
-        width: 150px;
-        padding: 0.75rem;
-        border: none;
-        border-radius: 4px;
-        background-color: #0a6ad8;
-        color: white;
-        cursor: pointer;
-        font-size: 1rem;
-      }
-      button:hover {
-        background-color: #0859b2;
-      }
-      .message {
-        padding: 1rem;
-        border-radius: 6px;
-        margin-bottom: 1.5rem;
-      }
-      .message.error {
-        background-color: #fdeaea;
-        border: 1px solid #f5b5b5;
-        color: #a12626;
-      }
-      .message.success {
-        background-color: #e6f7ed;
-        border: 1px solid #9ad1b7;
-        color: #1f6c42;
-      }
-      pre {
-        background-color: #f4f4f4;
-        padding: 1rem;
-        border-radius: 6px;
-        white-space: pre-wrap;
-      }
-      a.download-link {
-        display: inline-block;
-        margin-bottom: 1.5rem;
-        padding: 0.75rem 1.25rem;
-        border-radius: 4px;
-        background-color: #0a6ad8;
-        color: #fff;
-        text-decoration: none;
-      }
-      a.download-link:hover {
-        background-color: #0859b2;
-      }
-      .external-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 2rem;
-      }
-      .link-button {
-        display: inline-block;
-        padding: 0.75rem 1.25rem;
-        border-radius: 4px;
-        background-color: #1c1f24;
-        color: #fff;
-        text-decoration: none;
-        font-weight: 600;
-      }
-      .link-button:hover {
-        background-color: #444951;
-      }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Automatically mirror the user's OS-level preference for dark or light mode.
+      const applyTheme = (e) => {
+        if (e.matches) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      };
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      applyTheme(prefersDark);
+      prefersDark.addEventListener('change', applyTheme);
+    </script>
   </head>
-  <body>
-    <h1>Chess Match Pairing</h1>
-
-    {% if error %}
-      <div class="message error">{{ error }}</div>
-    {% endif %}
-
-    {% if success %}
-      <div class="message success">{{ success }}</div>
-    {% endif %}
-
-    <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
-      <label for="file">Upload your Student_Information.csv file:</label>
-      <input type="file" id="file" name="file" accept=".csv" required />
-      <label for="win_weight">Win performance weight (any non-negative number):</label>
-      <input
-        type="number"
-        id="win_weight"
-        name="win_weight"
-        min="0"
-        step="0.01"
-        value="{{ win_weight }}"
-      />
-      <label for="homework_weight">Homework accuracy weight (any non-negative number):</label>
-      <input
-        type="number"
-        id="homework_weight"
-        name="homework_weight"
-        min="0"
-        step="0.01"
-        value="{{ homework_weight }}"
-      />
-      <small>Weights are automatically normalised, so 0.7/0.3 or 70/30 both work the same.</small>
-      <button type="submit">Generate Pairings</button>
-    </form>
-
-    <div class="external-links">
-      <a
-        class="link-button"
-        href="{{ input_template_url }}"
-        target="_blank"
-        rel="noopener"
-        >View Input Template</a
+  <body class="h-full text-gray-900 transition-colors duration-300 dark:text-gray-100">
+    <div class="flex min-h-screen items-center justify-center px-4 py-10">
+      <main
+        class="w-full max-w-3xl rounded-3xl bg-white/90 p-8 shadow-2xl backdrop-blur-sm transition-colors duration-300 dark:bg-gray-800/90 sm:p-10"
+        aria-labelledby="page-title"
       >
-      <a
-        class="link-button"
-        href="{{ output_sample_url }}"
-        target="_blank"
-        rel="noopener"
-        >See Sample Output</a
-      >
-      <a
-        class="link-button"
-        href="{{ github_url }}"
-        target="_blank"
-        rel="noopener"
-        >GitHub Repository</a
-      >
+        <header class="mb-8 text-center">
+          <h1 id="page-title" class="text-3xl font-semibold tracking-tight md:text-4xl">
+            Chess Match Pairing
+          </h1>
+          <p class="mt-3 text-sm text-gray-600 transition-colors duration-300 dark:text-gray-300">
+            Upload player stats, fine-tune weightings, and download balanced matchups in
+            one click.
+          </p>
+        </header>
+
+        {% if error %}
+          <div
+            class="mb-6 rounded-2xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm font-medium text-red-700 transition-all duration-300 dark:border-red-700/40 dark:bg-red-900/40 dark:text-red-200"
+            role="alert"
+          >
+            {{ error }}
+          </div>
+        {% endif %}
+
+        {% if success %}
+          <div
+            class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm font-medium text-emerald-700 transition-all duration-300 dark:border-emerald-700/40 dark:bg-emerald-900/40 dark:text-emerald-200"
+            role="status"
+          >
+            {{ success }}
+          </div>
+        {% endif %}
+
+        <form
+          action="{{ url_for('upload') }}"
+          method="post"
+          enctype="multipart/form-data"
+          class="space-y-6"
+        >
+          <div>
+            <label
+              for="file"
+              class="block text-sm font-semibold text-gray-700 transition-colors duration-300 dark:text-gray-200"
+              >Upload Student_Information.csv</label
+            >
+            <input
+              id="file"
+              name="file"
+              type="file"
+              accept=".csv"
+              required
+              class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 transition duration-300 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-indigo-400 dark:focus:ring-indigo-400/40"
+            />
+          </div>
+
+          <div class="grid gap-5 md:grid-cols-2">
+            <div>
+              <label
+                for="win_weight"
+                class="block text-sm font-semibold text-gray-700 transition-colors duration-300 dark:text-gray-200"
+                >Win performance weight</label
+              >
+              <input
+                id="win_weight"
+                name="win_weight"
+                type="number"
+                min="0"
+                step="0.01"
+                value="{{ win_weight }}"
+                class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 transition duration-300 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-indigo-400 dark:focus:ring-indigo-400/40"
+              />
+            </div>
+            <div>
+              <label
+                for="homework_weight"
+                class="block text-sm font-semibold text-gray-700 transition-colors duration-300 dark:text-gray-200"
+                >Homework accuracy weight</label
+              >
+              <input
+                id="homework_weight"
+                name="homework_weight"
+                type="number"
+                min="0"
+                step="0.01"
+                value="{{ homework_weight }}"
+                class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 transition duration-300 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-indigo-400 dark:focus:ring-indigo-400/40"
+              />
+            </div>
+          </div>
+
+          <p class="text-xs text-gray-500 transition-colors duration-300 dark:text-gray-400">
+            Weights are automatically normalised, so 0.7/0.3 or 70/30 both work the same.
+          </p>
+
+          <button
+            type="submit"
+            class="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-500 to-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-indigo-400 hover:to-blue-500 focus:outline-none focus:ring-4 focus:ring-indigo-400/40 focus:ring-offset-2 dark:focus:ring-offset-gray-900 md:w-auto"
+          >
+            <span
+              class="absolute inset-0 -translate-y-full bg-white/20 transition-transform duration-500 group-hover:translate-y-0"
+            ></span>
+            <span class="relative">Generate Pairings</span>
+          </button>
+        </form>
+
+        <section
+          aria-label="Helpful links"
+          class="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap"
+        >
+          <a
+            class="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-400 hover:text-indigo-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-indigo-400 dark:hover:text-indigo-300 dark:focus:ring-offset-gray-900"
+            href="{{ input_template_url }}"
+            target="_blank"
+            rel="noopener"
+            >View Input Template</a
+          >
+          <a
+            class="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-400 hover:text-indigo-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-indigo-400 dark:hover:text-indigo-300 dark:focus:ring-offset-gray-900"
+            href="{{ output_sample_url }}"
+            target="_blank"
+            rel="noopener"
+            >See Sample Output</a
+          >
+          <a
+            class="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-400 hover:text-indigo-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-indigo-400 dark:hover:text-indigo-300 dark:focus:ring-offset-gray-900"
+            href="{{ github_url }}"
+            target="_blank"
+            rel="noopener"
+            >GitHub Repository</a
+          >
+        </section>
+
+        {% if output_exists %}
+          <section class="mt-10">
+            <a
+              href="{{ url_for('download') }}"
+              class="inline-flex items-center rounded-2xl border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-500 hover:bg-indigo-100 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:ring-offset-2 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-100 dark:hover:border-indigo-400 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-50 dark:focus:ring-offset-gray-900"
+            >
+              Download next_matches.csv
+            </a>
+          </section>
+        {% endif %}
+
+        {% if summary %}
+          <section class="mt-10">
+            <h2 class="text-lg font-semibold text-gray-900 transition-colors duration-300 dark:text-gray-100">
+              Latest Summary
+            </h2>
+            <pre
+              class="mt-3 whitespace-pre-wrap rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-800 transition-colors duration-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            >{{ summary }}</pre>
+          </section>
+        {% endif %}
+      </main>
     </div>
-
-    {% if output_exists %}
-      <a class="download-link" href="{{ url_for('download') }}">Download next_matches.csv</a>
-    {% endif %}
-
-    {% if summary %}
-      <h2>Latest Summary</h2>
-      <pre>{{ summary }}</pre>
-    {% endif %}
   </body>
 </html>
