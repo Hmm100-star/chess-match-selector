@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en" class="h-full bg-gray-100 transition-colors duration-300 dark:bg-gray-900">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>About | Chess Match Selector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      const applyTheme = (e) => {
+        if (e.matches) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      };
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      applyTheme(prefersDark);
+      prefersDark.addEventListener('change', applyTheme);
+    </script>
+  </head>
+  <body class="h-full text-gray-900 transition-colors duration-300 dark:text-gray-100">
+    <div class="flex min-h-screen items-center justify-center px-4 py-10">
+      <main
+        class="w-full max-w-3xl rounded-3xl bg-white/90 p-8 shadow-2xl backdrop-blur-sm transition-colors duration-300 dark:bg-gray-800/90 sm:p-10"
+      >
+        <nav class="mb-8 flex flex-col gap-3 text-sm font-semibold text-gray-600 transition-colors duration-300 dark:text-gray-300 sm:flex-row sm:items-center sm:justify-between">
+          <span class="text-lg text-gray-900 transition-colors duration-300 dark:text-gray-100">Chess Match Selector</span>
+          <div class="flex flex-wrap gap-2">
+            <a
+              href="{{ url_for('index') }}"
+              class="rounded-2xl border px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:text-indigo-600 hover:shadow sm:min-w-[140px]
+              {% if active_page == 'pairings' %}
+                border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/60 dark:bg-indigo-500/10 dark:text-indigo-200
+              {% else %}
+                border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200
+              {% endif %}"
+            >Pairings</a>
+            <a
+              href="{{ url_for('update_page') }}"
+              class="rounded-2xl border px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:text-emerald-600 hover:shadow sm:min-w-[140px]
+              {% if active_page == 'update' %}
+                border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/60 dark:bg-emerald-500/10 dark:text-emerald-200
+              {% else %}
+                border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200
+              {% endif %}"
+            >Update Sheet</a>
+            <a
+              href="{{ url_for('about_page') }}"
+              class="rounded-2xl border px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:text-sky-600 hover:shadow sm:min-w-[140px]
+              {% if active_page == 'about' %}
+                border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-500/60 dark:bg-sky-500/10 dark:text-sky-200
+              {% else %}
+                border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200
+              {% endif %}"
+            >About</a>
+            <a
+              href="{{ github_url }}"
+              target="_blank"
+              rel="noopener"
+              class="rounded-2xl border px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:text-gray-900 hover:shadow sm:min-w-[140px] border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200"
+            >GitHub</a>
+          </div>
+        </nav>
+
+        <header class="mb-6 text-center">
+          <h1 class="text-3xl font-semibold tracking-tight md:text-4xl">About This Tool</h1>
+          <p class="mt-3 text-sm text-gray-600 transition-colors duration-300 dark:text-gray-300">
+            Chess Match Selector streamlines pairing students, collecting round results, and rolling those stats back into your master sheet.
+          </p>
+        </header>
+
+        <section class="space-y-4 text-sm leading-relaxed text-gray-700 transition-colors duration-300 dark:text-gray-200">
+          <p>
+            <strong>Purpose:</strong> provide a complete, repeatable loop for running scholastic chess clubs—generate balanced pairings, capture wins/losses and homework accuracy, then update each student's history automatically.
+          </p>
+          <div class="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 transition-colors duration-300 dark:border-gray-700 dark:bg-gray-900/40">
+            <p class="font-semibold text-gray-900 transition-colors duration-300 dark:text-gray-100">How to use it</p>
+            <ol class="mt-2 list-decimal space-y-2 pl-5">
+              <li>Visit the <a href="{{ url_for('index') }}" class="font-semibold text-indigo-600 hover:underline">Pairings</a> page, upload your <code>Student_Information.csv</code>, and adjust the win/homework weights if needed.</li>
+              <li>Download the enriched <code>next_matches.csv</code>, run the round, and fill in the result/homework columns for both colours (bye rows included).</li>
+              <li>Head to the <a href="{{ url_for('update_page') }}" class="font-semibold text-emerald-600 hover:underline">Update Sheet</a> page, upload the latest <code>Student_Information.csv</code> plus the completed match sheet, and download the refreshed master file.</li>
+            </ol>
+          </div>
+          <p>
+            Keep iterating: each updated master sheet feeds right back into the pairing page so your students' ratings reflect every round.
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

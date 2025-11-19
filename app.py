@@ -43,6 +43,13 @@ def load_summary() -> Optional[str]:
     return None
 
 
+def base_nav_context(active_page: str) -> dict:
+    return {
+        "active_page": active_page,
+        "github_url": GITHUB_URL,
+    }
+
+
 def build_context(**overrides: Union[str, float, bool, None]) -> dict:
     """Assemble template context with sensible defaults."""
     context = {
@@ -54,8 +61,8 @@ def build_context(**overrides: Union[str, float, bool, None]) -> dict:
         "success": None,
         "input_template_url": INPUT_TEMPLATE_URL,
         "output_sample_url": OUTPUT_SAMPLE_URL,
-        "github_url": GITHUB_URL,
     }
+    context.update(base_nav_context("pairings"))
     context.update(overrides)
     return context
 
@@ -66,6 +73,16 @@ def build_update_context(**overrides: Union[str, float, bool, None]) -> dict:
         "success": None,
         "output_exists": (OUTPUTS_DIR / UPDATED_OUTPUT_FILENAME).exists(),
     }
+    context.update(base_nav_context("update"))
+    context.update(overrides)
+    return context
+
+
+def build_about_context(**overrides: Union[str, float, bool, None]) -> dict:
+    context = {
+        "error": None,
+    }
+    context.update(base_nav_context("about"))
     context.update(overrides)
     return context
 
@@ -74,6 +91,12 @@ def build_update_context(**overrides: Union[str, float, bool, None]) -> dict:
 def index() -> str:
     """Render the upload form and show pairing summary if available."""
     return render_template("index.html", **build_context())
+
+
+@app.route("/about", methods=["GET"])
+def about_page() -> str:
+    """Explain the workflow and purpose of the tool."""
+    return render_template("about.html", **build_about_context())
 
 
 @app.route("/upload", methods=["POST"])
