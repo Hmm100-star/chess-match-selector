@@ -5,12 +5,14 @@ from flask import Flask, render_template, request, send_file
 from werkzeug.utils import secure_filename
 
 from pairing_logic import generate_pairings
+from results_updater import update_student_information
 
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOADS_DIR = BASE_DIR / "uploads"
 OUTPUTS_DIR = BASE_DIR / "outputs"
 OUTPUT_FILENAME = "next_matches.csv"
+UPDATED_OUTPUT_FILENAME = "Student_Information_updated.csv"
 SUMMARY_FILE = OUTPUTS_DIR / "summary.txt"
 
 DEFAULT_WIN_WEIGHT = 0.7
@@ -53,6 +55,16 @@ def build_context(**overrides: Union[str, float, bool, None]) -> dict:
         "input_template_url": INPUT_TEMPLATE_URL,
         "output_sample_url": OUTPUT_SAMPLE_URL,
         "github_url": GITHUB_URL,
+    }
+    context.update(overrides)
+    return context
+
+
+def build_update_context(**overrides: Union[str, float, bool, None]) -> dict:
+    context = {
+        "error": None,
+        "success": None,
+        "output_exists": (OUTPUTS_DIR / UPDATED_OUTPUT_FILENAME).exists(),
     }
     context.update(overrides)
     return context
@@ -208,6 +220,88 @@ def download():
                     output_exists=False,
                     summary=None,
                 ),
+            ),
+            404,
+        )
+
+    return send_file(output_file, as_attachment=True)
+
+
+@app.route("/update", methods=["GET", "POST"])
+def update_page():
+    """Allow users to upload completed results and refresh Student_Information."""
+    if request.method == "GET":
+        return render_template("update.html", **build_update_context())
+
+    student_file = request.files.get("student_file")
+    matches_file = request.files.get("matches_file")
+
+    if not student_file or student_file.filename == "":
+        return (
+            render_template(
+                "update.html",
+                **build_update_context(error="Please upload the current Student_Information.csv file."),
+            ),
+            400,
+        )
+
+    if not matches_file or matches_file.filename == "":
+        return (
+            render_template(
+                "update.html",
+                **build_update_context(error="Please upload the completed next_matches.csv file."),
+            ),
+            400,
+        )
+
+    student_filename = secure_filename(student_file.filename)
+    matches_filename = secure_filename(matches_file.filename)
+
+    if not allowed_file(student_filename) or not allowed_file(matches_filename):
+        return (
+            render_template(
+                "update.html",
+                **build_update_context(error="Both uploads must be .csv files."),
+            ),
+            400,
+        )
+
+    student_path = UPLOADS_DIR / student_filename
+    matches_path = UPLOADS_DIR / matches_filename
+    student_file.save(student_path)
+    matches_file.save(matches_path)
+
+    output_file = OUTPUTS_DIR / UPDATED_OUTPUT_FILENAME
+
+    try:
+        update_student_information(student_path, matches_path, output_file)
+    except ValueError as exc:
+        return (
+            render_template(
+                "update.html",
+                **build_update_context(error=str(exc)),
+            ),
+            400,
+        )
+
+    return render_template(
+        "update.html",
+        **build_update_context(
+            success="Student_Information.csv updated successfully.",
+            output_exists=True,
+        ),
+    )
+
+
+@app.route("/download-updated", methods=["GET"])
+def download_updated():
+    """Serve the refreshed Student_Information.csv file."""
+    output_file = OUTPUTS_DIR / UPDATED_OUTPUT_FILENAME
+    if not output_file.exists():
+        return (
+            render_template(
+                "update.html",
+                **build_update_context(error="No updated Student_Information.csv found. Upload results first."),
             ),
             404,
         )

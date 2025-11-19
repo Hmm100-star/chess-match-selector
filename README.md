@@ -8,8 +8,8 @@ Overview
 - Provides both a command-line script and a Flask web interface for uploads.
 - Web UI includes quick links to the input template, sample output, and GitHub repository.
 - Inputs should be in this format as a .csv file: https://docs.google.com/spreadsheets/d/1kJKOxY_5oYmAcgvMtz_e9llXeYifauULxCitCE9vAQM/edit?usp=sharing 
-- Output will look like: https://docs.google.com/spreadsheets/d/1-yRVcTHes2QIS2x6wMTnXj-ONyKOT50CcB9WxviX3rw/edit?usp=sharing
-- The app is currently on Render at: https://chess-match-selector.onrender.com/ 
+- Output now includes blank columns for White/Black results plus homework correct/incorrect counts so you can record each round before feeding it back into the master sheet.
+- The app is currently on Render at: https://chess-match-selector.onrender.com/
 
 How to Use
 --------------------
@@ -18,6 +18,15 @@ How to Use
 - If you don't have specific values (ie homework, wins, ties, etc.) leave those cells blank.
 - Export the file as a .cvs file
 - Use the Render web-app above or run it locally.
+
+Complete Loop Workflow
+----------------------
+1. Upload the latest `Student_Information.csv` on the main page, optionally tweak the win/homework weights, and download the generated `next_matches.csv`.
+2. During/after the round, fill in the new columns for each pairing:
+   - `White Result` / `Black Result`: use Win/Loss/Tie (or W/L/T). `Bye` counts as a win if you score byes that way.
+   - `White Homework Correct/Incorrect` and `Black Homework Correct/Incorrect`: enter numeric counts, leaving blanks for zero.
+3. Visit `/update` ("Update Student Information" link in the UI) and upload the current `Student_Information.csv` alongside the completed `next_matches.csv`.
+4. Download the refreshed master sheet and use it to generate the next round.
 
 Command-Line Usage
 ------------------
@@ -32,6 +41,7 @@ Flask Web App (Local)
 - Export `FLASK_APP=app.py` (if needed) and install dependencies.
 - Start with `flask run` or `python app.py`.
 - Visit `http://localhost:5000`, upload `Student_Information.csv`, adjust the weighting inputs if desired, then download `next_matches.csv`. The app shows a summary including the weights used.
+- Use the "Update Student Information" link to open the second page where you can upload the filled `next_matches.csv` together with the current student sheet. The app validates the results, increments win/loss/tie totals, colour history (including bye rounds), and homework counts, and then provides a download link for the refreshed CSV.
 
 Render Deployment
 -----------------
