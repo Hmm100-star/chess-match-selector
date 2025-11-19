@@ -29,36 +29,36 @@
         <div class="flex flex-wrap items-center gap-2">
           <a
             href="{{ url_for('index') }}"
-            class="rounded-2xl border px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:text-indigo-600 hover:shadow sm:min-w-[140px]"
+            class="rounded-2xl px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:bg-indigo-100 hover:text-indigo-700 dark:hover:bg-indigo-900/60 sm:min-w-[140px]"
             {% if active_page == 'pairings' %}
-              border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/60 dark:bg-indigo-500/10 dark:text-indigo-200
+              bg-indigo-600 text-white shadow-md shadow-indigo-300/50 dark:bg-indigo-500 dark:shadow-indigo-900/40
             {% else %}
-              border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200
+              text-gray-700 dark:text-gray-200
             {% endif %}"
           >Pairings</a>
           <a
             href="{{ url_for('update_page') }}"
-            class="rounded-2xl border px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:text-emerald-600 hover:shadow sm:min-w-[140px]"
+            class="rounded-2xl px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-900/60 sm:min-w-[140px]"
             {% if active_page == 'update' %}
-              border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/60 dark:bg-emerald-500/10 dark:text-emerald-200
+              bg-emerald-600 text-white shadow-md shadow-emerald-300/50 dark:bg-emerald-500 dark:shadow-emerald-900/40
             {% else %}
-              border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200
+              text-gray-700 dark:text-gray-200
             {% endif %}"
           >Update Sheet</a>
           <a
             href="{{ url_for('about_page') }}"
-            class="rounded-2xl border px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:text-sky-600 hover:shadow sm:min-w-[140px]"
+            class="rounded-2xl px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:bg-sky-100 hover:text-sky-700 dark:hover:bg-sky-900/60 sm:min-w-[140px]"
             {% if active_page == 'about' %}
-              border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-500/60 dark:bg-sky-500/10 dark:text-sky-200
+              bg-sky-600 text-white shadow-md shadow-sky-300/50 dark:bg-sky-500 dark:shadow-sky-900/40
             {% else %}
-              border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200
+              text-gray-700 dark:text-gray-200
             {% endif %}"
           >About</a>
           <a
             href="{{ github_url }}"
             target="_blank"
             rel="noopener"
-            class="rounded-2xl border px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:text-gray-900 hover:shadow sm:min-w-[140px] border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200"
+            class="rounded-2xl px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:bg-gray-200 hover:text-gray-900 hover:shadow-lg dark:hover:bg-gray-700 dark:hover:text-white sm:min-w-[140px] text-gray-700 dark:text-gray-200"
           >GitHub</a>
         </div>
       </div>
