@@ -129,13 +129,11 @@ def select_pairings(
 
 
 RESULT_COLUMNS = [
-    "White Result",
+    "Who Won",
     "White Homework Correct",
     "White Homework Incorrect",
-    "Black Result",
     "Black Homework Correct",
     "Black Homework Incorrect",
-    "Notes",
 ]
 
 
