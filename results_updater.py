@@ -23,13 +23,11 @@ REQUIRED_MATCH_COLUMNS = [
     "White Player Strength",
     "Black Player",
     "Black Player Strength",
-    "White Result",
+    "Who Won",
     "White Homework Correct",
     "White Homework Incorrect",
-    "Black Result",
     "Black Homework Correct",
     "Black Homework Incorrect",
-    "Notes",
 ]
 
 
@@ -46,24 +44,30 @@ def _normalise_name(value) -> str:
     return str(value).strip()
 
 
-def _parse_result(raw: str) -> ResultDelta:
+def _parse_winner(raw: str) -> tuple[ResultDelta, ResultDelta]:
     if raw is None:
-        raise ValueError("Result fields must be provided for every listed player.")
+        raise ValueError("Winner must be provided for every listed pairing.")
 
     value = str(raw).strip().lower()
     if not value:
-        raise ValueError("Result fields must be provided for every listed player.")
+        raise ValueError("Winner must be provided for every listed pairing.")
 
-    if value in {"win", "w", "1", "bye", "1-0"}:
-        return ResultDelta(1, 0, 0)
-    if value in {"loss", "l", "0", "0-1"}:
-        return ResultDelta(0, 1, 0)
+    if value in {"white", "w", "1-0", "white win", "white player"}:
+        return ResultDelta(1, 0, 0), ResultDelta(0, 1, 0)
+    if value in {"black", "b", "0-1", "black win", "black player"}:
+        return ResultDelta(0, 1, 0), ResultDelta(1, 0, 0)
     if value in {"tie", "draw", "t", "d", "0.5", "1/2", "1/2-1/2"}:
-        return ResultDelta(0, 0, 1)
+        return ResultDelta(0, 0, 1), ResultDelta(0, 0, 1)
+    if value in {"bye"}:
+        return ResultDelta(1, 0, 0), ResultDelta(0, 0, 0)
 
     raise ValueError(
-        "Result must be Win, Loss, Tie (or W/L/T abbreviations). Got: %r" % raw
+        "Winner must be White, Black, Tie/Draw, or Bye. Got: %r" % raw
     )
+
+
+def _has_result(delta: ResultDelta) -> bool:
+    return any([delta.wins, delta.losses, delta.ties])
 
 
 def _parse_homework(value: str) -> int:
@@ -117,23 +121,22 @@ def update_student_information(
 
     def update_player(
         name: str,
-        result_raw: str,
+        result_delta: ResultDelta,
         correct_raw: str,
         incorrect_raw: str,
         color_field: str,
     ) -> None:
         player_name = _normalise_name(name)
+        correct_delta = _parse_homework(correct_raw)
+        incorrect_delta = _parse_homework(incorrect_raw)
+
         if not player_name:
-            if any(_normalise_name(v) for v in [result_raw, correct_raw, incorrect_raw]):
+            if _has_result(result_delta) or correct_delta or incorrect_delta:
                 raise ValueError("Cannot record results without a player name.")
             return
 
         if player_name not in name_to_index:
             raise ValueError(f"Player '{player_name}' not found in Student_Information.csv")
-
-        result_delta = _parse_result(result_raw)
-        correct_delta = _parse_homework(correct_raw)
-        incorrect_delta = _parse_homework(incorrect_raw)
 
         student_index = name_to_index[player_name]
         students_df.at[student_index, color_field] += 1
@@ -144,16 +147,17 @@ def update_student_information(
         students_df.at[student_index, "Incorrect Homework"] += incorrect_delta
 
     for _, row in matches_df.iterrows():
+        white_delta, black_delta = _parse_winner(row.get("Who Won"))
         update_player(
             row.get("White Player"),
-            row.get("White Result"),
+            white_delta,
             row.get("White Homework Correct"),
             row.get("White Homework Incorrect"),
             "# Times Played White",
         )
         update_player(
             row.get("Black Player"),
-            row.get("Black Result"),
+            black_delta,
             row.get("Black Homework Correct"),
             row.get("Black Homework Incorrect"),
             "# Times Played Black",
