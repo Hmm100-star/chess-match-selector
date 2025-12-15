@@ -8,7 +8,7 @@ Overview
 - Provides both a command-line script and a Flask web interface for uploads.
 - Web UI includes quick links to the input template, sample output, and GitHub repository.
 - Inputs should be in this format as a .csv file: https://docs.google.com/spreadsheets/d/1kJKOxY_5oYmAcgvMtz_e9llXeYifauULxCitCE9vAQM/edit?usp=sharing 
-- Output now includes blank columns for White/Black results plus homework correct/incorrect counts so you can record each round before feeding it back into the master sheet.
+- Output now includes a `Who Won` column plus homework correct/incorrect counts so you can record each round before feeding it back into the master sheet.
 - The app is currently on Render at: https://chess-match-selector.onrender.com/
 
 How to Use
@@ -23,7 +23,7 @@ Complete Loop Workflow
 ----------------------
 1. Upload the latest `Student_Information.csv` on the main page, optionally tweak the win/homework weights, and download the generated `next_matches.csv`.
 2. During/after the round, fill in the new columns for each pairing:
-   - `White Result` / `Black Result`: use Win/Loss/Tie (or W/L/T). `Bye` counts as a win if you score byes that way.
+   - `Who Won`: use `W`, `B`, or `T` (case-insensitive). Leave blank on bye rows; those award the listed player a bye win by default.
    - `White Homework Correct/Incorrect` and `Black Homework Correct/Incorrect`: enter numeric counts, leaving blanks for zero.
 3. Visit `/update` ("Update Student Information" link in the UI) and upload the current `Student_Information.csv` alongside the completed `next_matches.csv`.
 4. Download the refreshed master sheet and use it to generate the next round.
