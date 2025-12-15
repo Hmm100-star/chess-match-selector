@@ -49,19 +49,30 @@ def _normalise_name(value) -> str:
 def _parse_who_won(raw: str) -> str | None:
     """Return a canonical winner marker: w, b, t, or None for blank."""
 
-def _parse_who_won(raw: Optional[str]) -> Optional[str]:
-    if raw is None or (isinstance(raw, float) and pd.isna(raw)):
-        return None
+def _parse_winner(raw: str) -> tuple[ResultDelta, ResultDelta]:
+    if raw is None:
+        raise ValueError("Winner must be provided for every listed pairing.")
 
     value = str(raw).strip().lower()
     if not value:
-        return None
+        raise ValueError("Winner must be provided for every listed pairing.")
 
-    if value not in {"w", "b", "t"}:
-        raise ValueError("Who Won must be W (white), B (black), or T (tie). Got: %r" % raw)
+    if value in {"white", "w", "1-0", "white win", "white player"}:
+        return ResultDelta(1, 0, 0), ResultDelta(0, 1, 0)
+    if value in {"black", "b", "0-1", "black win", "black player"}:
+        return ResultDelta(0, 1, 0), ResultDelta(1, 0, 0)
+    if value in {"tie", "draw", "t", "d", "0.5", "1/2", "1/2-1/2"}:
+        return ResultDelta(0, 0, 1), ResultDelta(0, 0, 1)
+    if value in {"bye"}:
+        return ResultDelta(1, 0, 0), ResultDelta(0, 0, 0)
 
-    mapping = {"w": "white", "b": "black", "t": "tie"}
-    return mapping[value]
+    raise ValueError(
+        "Winner must be White, Black, Tie/Draw, or Bye. Got: %r" % raw
+    )
+
+
+def _has_result(delta: ResultDelta) -> bool:
+    return any([delta.wins, delta.losses, delta.ties])
 
 
 def _parse_homework(value: str) -> int:
@@ -119,14 +130,16 @@ def update_student_information(
 
     def apply_player(
         name: str,
-        color_field: str,
-        result_delta: Optional[ResultDelta],
+        result_delta: ResultDelta,
         correct_raw: str,
         incorrect_raw: str,
     ) -> None:
         player_name = _normalise_name(name)
+        correct_delta = _parse_homework(correct_raw)
+        incorrect_delta = _parse_homework(incorrect_raw)
+
         if not player_name:
-            if result_delta and (result_delta.wins or result_delta.losses or result_delta.ties):
+            if _has_result(result_delta) or correct_delta or incorrect_delta:
                 raise ValueError("Cannot record results without a player name.")
             if any(_normalise_name(v) for v in [correct_raw, incorrect_raw]):
                 raise ValueError("Cannot record homework without a player name.")
@@ -134,10 +147,6 @@ def update_student_information(
 
         if player_name not in name_to_index:
             raise ValueError(f"Player '{player_name}' not found in Student_Information.csv")
-
-        correct_delta = _parse_homework(correct_raw)
-        incorrect_delta = _parse_homework(incorrect_raw)
-        result_delta = result_delta or ResultDelta(0, 0, 0)
 
         student_index = name_to_index[player_name]
         students_df.at[student_index, color_field] += 1
@@ -148,68 +157,16 @@ def update_student_information(
         students_df.at[student_index, "Incorrect Homework"] += incorrect_delta
 
     for _, row in matches_df.iterrows():
-        white_name = _normalise_name(row.get("White Player"))
-        black_name = _normalise_name(row.get("Black Player"))
-        winner = _parse_who_won(row.get("Who Won"))
-
-        if winner == "white" and not white_name:
-            raise ValueError("Cannot record a White win without a White Player name.")
-        if winner == "black" and not black_name:
-            raise ValueError("Cannot record a Black win without a Black Player name.")
-        if winner == "tie" and (not white_name or not black_name):
-            raise ValueError("Cannot record a tie without both player names.")
-        if winner is None and white_name and black_name:
-            raise ValueError("Who Won must be W, B, or T when both players are listed.")
-        if not white_name and not black_name:
-            if winner:
-                raise ValueError("Cannot record a result when both player names are blank.")
-            if any(
-                _normalise_name(row.get(key))
-                for key in [
-                    "White Homework Correct",
-                    "White Homework Incorrect",
-                    "Black Homework Correct",
-                    "Black Homework Incorrect",
-                ]
-            ):
-                raise ValueError("Cannot record homework without player names.")
-            continue
-
-        white_result: Optional[ResultDelta]
-        black_result: Optional[ResultDelta]
-        if winner == "white":
-            white_result = ResultDelta(1, 0, 0)
-            black_result = ResultDelta(0, 1, 0)
-        elif winner == "black":
-            white_result = ResultDelta(0, 1, 0)
-            black_result = ResultDelta(1, 0, 0)
-        elif winner == "tie":
-            white_result = ResultDelta(0, 0, 1)
-            black_result = ResultDelta(0, 0, 1)
-        else:
-            white_result = None
-            black_result = None
-            if white_name and not black_name:
-                white_result = ResultDelta(1, 0, 0) if BYE_COUNTS_AS_WIN else ResultDelta(0, 0, 0)
-            elif black_name and not white_name:
-                black_result = ResultDelta(1, 0, 0) if BYE_COUNTS_AS_WIN else ResultDelta(0, 0, 0)
-
-        if not white_name:
-            white_result = None
-        if not black_name:
-            black_result = None
-
-        apply_player(
-            white_name,
-            "# Times Played White",
-            white_result,
+        white_delta, black_delta = _parse_winner(row.get("Who Won"))
+        update_player(
+            row.get("White Player"),
+            white_delta,
             row.get("White Homework Correct"),
             row.get("White Homework Incorrect"),
         )
-        apply_player(
-            black_name,
-            "# Times Played Black",
-            black_result,
+        update_player(
+            row.get("Black Player"),
+            black_delta,
             row.get("Black Homework Correct"),
             row.get("Black Homework Incorrect"),
         )

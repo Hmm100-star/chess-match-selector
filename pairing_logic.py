@@ -128,7 +128,11 @@ def select_pairings(
     return matches, unpaired_indices
 
 
-RESULT_COLUMNS = [
+OUTPUT_COLUMNS = [
+    "White Player",
+    "White Player Strength",
+    "Black Player",
+    "Black Player Strength",
     "Who Won",
     "White Homework Correct",
     "White Homework Incorrect",
@@ -145,30 +149,32 @@ def build_output_rows(
     """Convert pairings into a DataFrame ready for CSV export."""
     rows: List[dict] = []
 
-    def blank_result_fields() -> Dict[str, str]:
-        return {column: "" for column in RESULT_COLUMNS}
+    def empty_row() -> Dict[str, str]:
+        return {column: "" for column in OUTPUT_COLUMNS}
 
     for white_idx, black_idx in matches:
-        row = {
-            "White Player": sorted_players.at[white_idx, "Student Name"],
-            "White Player Strength": f"{sorted_players.at[white_idx, 'rating']:.3f}",
-            "Black Player": sorted_players.at[black_idx, "Student Name"],
-            "Black Player Strength": f"{sorted_players.at[black_idx, 'rating']:.3f}",
-        }
-        row.update(blank_result_fields())
+        row = empty_row()
+        row.update(
+            {
+                "White Player": sorted_players.at[white_idx, "Student Name"],
+                "White Player Strength": f"{sorted_players.at[white_idx, 'rating']:.3f}",
+                "Black Player": sorted_players.at[black_idx, "Student Name"],
+                "Black Player Strength": f"{sorted_players.at[black_idx, 'rating']:.3f}",
+            }
+        )
         rows.append(row)
 
     for index in unpaired_indices:
-        row = {
-            "White Player": sorted_players.at[index, "Student Name"],
-            "White Player Strength": f"{sorted_players.at[index, 'rating']:.3f}",
-            "Black Player": "",
-            "Black Player Strength": "",
-        }
-        row.update(blank_result_fields())
+        row = empty_row()
+        row.update(
+            {
+                "White Player": sorted_players.at[index, "Student Name"],
+                "White Player Strength": f"{sorted_players.at[index, 'rating']:.3f}",
+            }
+        )
         rows.append(row)
 
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=OUTPUT_COLUMNS)
 
 
 def generate_pairings(
