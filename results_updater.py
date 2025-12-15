@@ -23,13 +23,11 @@ REQUIRED_MATCH_COLUMNS = [
     "White Player Strength",
     "Black Player",
     "Black Player Strength",
-    "White Result",
+    "Who Won",
     "White Homework Correct",
     "White Homework Incorrect",
-    "Black Result",
     "Black Homework Correct",
     "Black Homework Incorrect",
-    "Notes",
 ]
 
 
@@ -45,25 +43,41 @@ def _normalise_name(value) -> str:
         return ""
     return str(value).strip()
 
+def _parse_who_won(raw: str) -> str | None:
+    """Return a canonical winner marker: w, b, t, or None for blank."""
 
-def _parse_result(raw: str) -> ResultDelta:
-    if raw is None:
-        raise ValueError("Result fields must be provided for every listed player.")
+    if raw is None or (isinstance(raw, float) and pd.isna(raw)):
+        return None
 
     value = str(raw).strip().lower()
     if not value:
-        raise ValueError("Result fields must be provided for every listed player.")
+        return None
 
-    if value in {"win", "w", "1", "bye", "1-0"}:
-        return ResultDelta(1, 0, 0)
-    if value in {"loss", "l", "0", "0-1"}:
-        return ResultDelta(0, 1, 0)
-    if value in {"tie", "draw", "t", "d", "0.5", "1/2", "1/2-1/2"}:
+    if value in {"w", "white"}:
+        return "w"
+    if value in {"b", "black"}:
+        return "b"
+    if value in {"t", "tie", "d", "draw"}:
+        return "t"
+    if value == "bye":
+        return "w"
+
+    raise ValueError("Who Won must be W, B, T, or blank.")
+
+
+def _result_delta_for_color(color: str, who_won: str | None) -> ResultDelta:
+    if who_won is None:
+        return ResultDelta(0, 0, 0)
+
+    if who_won == "t":
         return ResultDelta(0, 0, 1)
 
-    raise ValueError(
-        "Result must be Win, Loss, Tie (or W/L/T abbreviations). Got: %r" % raw
-    )
+    if who_won == "w":
+        return ResultDelta(1, 0, 0) if color == "white" else ResultDelta(0, 1, 0)
+    if who_won == "b":
+        return ResultDelta(0, 1, 0) if color == "white" else ResultDelta(1, 0, 0)
+
+    raise ValueError(f"Unexpected winner token {who_won!r}.")
 
 
 def _parse_homework(value: str) -> int:
@@ -117,21 +131,22 @@ def update_student_information(
 
     def update_player(
         name: str,
-        result_raw: str,
+        who_won: str | None,
         correct_raw: str,
         incorrect_raw: str,
         color_field: str,
+        color_label: str,
     ) -> None:
         player_name = _normalise_name(name)
         if not player_name:
-            if any(_normalise_name(v) for v in [result_raw, correct_raw, incorrect_raw]):
+            if any(_normalise_name(v) for v in [correct_raw, incorrect_raw]):
                 raise ValueError("Cannot record results without a player name.")
             return
 
         if player_name not in name_to_index:
             raise ValueError(f"Player '{player_name}' not found in Student_Information.csv")
 
-        result_delta = _parse_result(result_raw)
+        result_delta = _result_delta_for_color(color_label, who_won)
         correct_delta = _parse_homework(correct_raw)
         incorrect_delta = _parse_homework(incorrect_raw)
 
@@ -144,19 +159,22 @@ def update_student_information(
         students_df.at[student_index, "Incorrect Homework"] += incorrect_delta
 
     for _, row in matches_df.iterrows():
+        who_won = _parse_who_won(row.get("Who Won"))
         update_player(
             row.get("White Player"),
-            row.get("White Result"),
+            who_won,
             row.get("White Homework Correct"),
             row.get("White Homework Incorrect"),
             "# Times Played White",
+            "white",
         )
         update_player(
             row.get("Black Player"),
-            row.get("Black Result"),
+            who_won,
             row.get("Black Homework Correct"),
             row.get("Black Homework Incorrect"),
             "# Times Played Black",
+            "black",
         )
 
     output_csv.parent.mkdir(parents=True, exist_ok=True)
