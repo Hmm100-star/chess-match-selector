@@ -41,7 +41,16 @@ Flask Web App (Local)
 - Export `FLASK_APP=app.py` (if needed) and install dependencies.
 - Start with `flask run` or `python app.py`.
 - Visit `http://localhost:5000`, upload `Student_Information.csv`, adjust the weighting inputs if desired, then download `next_matches.csv`. The app shows a summary including the weights used.
-- Use the "Update Student Information" link to open the second page where you can upload the filled `next_matches.csv` together with the current student sheet. The app validates the results, increments win/loss/tie totals, colour history (including bye rounds), and homework counts, and then provides a download link for the refreshed CSV.
+- Use the "Update Student Information" link to open the second page where you can upload the filled `next_matches.csv` together with the current student sheet. The app validates the `Who Won` field (W/B/T/blank), increments win/loss/tie totals, colour history (including bye rounds), and homework counts, and then provides a download link for the refreshed CSV.
+
+`next_matches.csv` header
+-------------------------
+
+```
+White Player,White Player Strength,Black Player,Black Player Strength,Who Won,White Homework Correct,White Homework Incorrect,Black Homework Correct,Black Homework Incorrect
+```
+
+Use `W` for white wins, `B` for black wins, `T` for ties, and leave blank if the result is not recorded yet.
 
 Render Deployment
 -----------------

@@ -46,6 +46,8 @@ def _normalise_name(value) -> str:
         return ""
     return str(value).strip()
 
+def _parse_who_won(raw: str) -> str | None:
+    """Return a canonical winner marker: w, b, t, or None for blank."""
 
 def _parse_who_won(raw: Optional[str]) -> Optional[str]:
     if raw is None or (isinstance(raw, float) and pd.isna(raw)):
