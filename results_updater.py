@@ -43,6 +43,8 @@ def _normalise_name(value) -> str:
         return ""
     return str(value).strip()
 
+def _parse_who_won(raw: str) -> str | None:
+    """Return a canonical winner marker: w, b, t, or None for blank."""
 
 def _parse_winner(raw: str) -> tuple[ResultDelta, ResultDelta]:
     if raw is None:
@@ -125,6 +127,7 @@ def update_student_information(
         correct_raw: str,
         incorrect_raw: str,
         color_field: str,
+        color_label: str,
     ) -> None:
         player_name = _normalise_name(name)
         correct_delta = _parse_homework(correct_raw)
@@ -154,6 +157,7 @@ def update_student_information(
             row.get("White Homework Correct"),
             row.get("White Homework Incorrect"),
             "# Times Played White",
+            "white",
         )
         update_player(
             row.get("Black Player"),
@@ -161,6 +165,7 @@ def update_student_information(
             row.get("Black Homework Correct"),
             row.get("Black Homework Incorrect"),
             "# Times Played Black",
+            "black",
         )
 
     output_csv.parent.mkdir(parents=True, exist_ok=True)

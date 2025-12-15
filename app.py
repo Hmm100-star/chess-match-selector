@@ -20,9 +20,7 @@ DEFAULT_HOMEWORK_WEIGHT = 0.3
 INPUT_TEMPLATE_URL = (
     "https://docs.google.com/spreadsheets/d/1kJKOxY_5oYmAcgvMtz_e9llXeYifauULxCitCE9vAQM/edit?usp=sharing"
 )
-OUTPUT_SAMPLE_URL = (
-    "https://docs.google.com/spreadsheets/d/1-yRVcTHes2QIS2x6wMTnXj-ONyKOT50CcB9WxviX3rw/edit?usp=sharing"
-)
+OUTPUT_SAMPLE_URL = "/static/next_matches_sample.csv"
 GITHUB_URL = "https://github.com/Hmm100-star/chess-match-selector"
 
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
