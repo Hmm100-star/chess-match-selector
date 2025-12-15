@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Optional
 
 import pandas as pd
 
@@ -17,6 +17,9 @@ NUMERIC_COLUMNS = [
     "Correct Homework",
     "Incorrect Homework",
 ]
+
+
+BYE_COUNTS_AS_WIN = True  # Award listed players a win when they receive a bye row with no opponent.
 
 REQUIRED_MATCH_COLUMNS = [
     "White Player",
@@ -102,7 +105,11 @@ def _coerce_numeric_columns(df: pd.DataFrame) -> pd.DataFrame:
 def update_student_information(
     students_csv: Path, matches_csv: Path, output_csv: Path
 ) -> Path:
-    """Update the Student_Information sheet using a completed next_matches.csv."""
+    """Update the Student_Information sheet using a completed next_matches.csv.
+
+    The match sheet must include the "Who Won" column with values W/B/T (or blank
+    on bye rows) plus per-colour homework correct/incorrect counts.
+    """
 
     students_df = pd.read_csv(students_csv)
     students_df.columns = students_df.columns.str.strip()
@@ -121,13 +128,11 @@ def update_student_information(
             raise ValueError(f"Duplicate student name detected: {name}")
         name_to_index[normalised] = idx
 
-    def update_player(
+    def apply_player(
         name: str,
         result_delta: ResultDelta,
         correct_raw: str,
         incorrect_raw: str,
-        color_field: str,
-        color_label: str,
     ) -> None:
         player_name = _normalise_name(name)
         correct_delta = _parse_homework(correct_raw)
@@ -136,6 +141,8 @@ def update_student_information(
         if not player_name:
             if _has_result(result_delta) or correct_delta or incorrect_delta:
                 raise ValueError("Cannot record results without a player name.")
+            if any(_normalise_name(v) for v in [correct_raw, incorrect_raw]):
+                raise ValueError("Cannot record homework without a player name.")
             return
 
         if player_name not in name_to_index:
@@ -156,16 +163,12 @@ def update_student_information(
             white_delta,
             row.get("White Homework Correct"),
             row.get("White Homework Incorrect"),
-            "# Times Played White",
-            "white",
         )
         update_player(
             row.get("Black Player"),
             black_delta,
             row.get("Black Homework Correct"),
             row.get("Black Homework Incorrect"),
-            "# Times Played Black",
-            "black",
         )
 
     output_csv.parent.mkdir(parents=True, exist_ok=True)
