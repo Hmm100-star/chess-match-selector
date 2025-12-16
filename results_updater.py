@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, Tuple
 
 import pandas as pd
 
@@ -18,9 +18,6 @@ NUMERIC_COLUMNS = [
     "Incorrect Homework",
 ]
 
-
-BYE_COUNTS_AS_WIN = True  # Award listed players a win when they receive a bye row with no opponent.
-
 REQUIRED_MATCH_COLUMNS = [
     "White Player",
     "White Player Strength",
@@ -31,6 +28,7 @@ REQUIRED_MATCH_COLUMNS = [
     "White Homework Incorrect",
     "Black Homework Correct",
     "Black Homework Incorrect",
+    "Notes",
 ]
 
 
@@ -46,16 +44,23 @@ def _normalise_name(value) -> str:
         return ""
     return str(value).strip()
 
-def _parse_who_won(raw: str) -> str | None:
-    """Return a canonical winner marker: w, b, t, or None for blank."""
 
-def _parse_winner(raw: str) -> tuple[ResultDelta, ResultDelta]:
-    if raw is None:
-        raise ValueError("Winner must be provided for every listed pairing.")
+def _normalise_note(value) -> str:
+    if pd.isna(value):
+        return ""
+    return str(value).strip()
 
-    value = str(raw).strip().lower()
+
+def _parse_who_won(raw: str) -> Tuple[ResultDelta, ResultDelta]:
+    """Return per-colour deltas for a Who Won cell.
+
+    Accepts W/B/T synonyms. Blank or "Bye" values produce zero deltas to leave
+    win/loss/tie counts unchanged while still allowing colour tracking.
+    """
+
+    value = "" if raw is None else str(raw).strip().lower()
     if not value:
-        raise ValueError("Winner must be provided for every listed pairing.")
+        return ResultDelta(0, 0, 0), ResultDelta(0, 0, 0)
 
     if value in {"white", "w", "1-0", "white win", "white player"}:
         return ResultDelta(1, 0, 0), ResultDelta(0, 1, 0)
@@ -64,11 +69,9 @@ def _parse_winner(raw: str) -> tuple[ResultDelta, ResultDelta]:
     if value in {"tie", "draw", "t", "d", "0.5", "1/2", "1/2-1/2"}:
         return ResultDelta(0, 0, 1), ResultDelta(0, 0, 1)
     if value in {"bye"}:
-        return ResultDelta(1, 0, 0), ResultDelta(0, 0, 0)
+        return ResultDelta(0, 0, 0), ResultDelta(0, 0, 0)
 
-    raise ValueError(
-        "Winner must be White, Black, Tie/Draw, or Bye. Got: %r" % raw
-    )
+    raise ValueError("Who Won must be White, Black, Tie/Draw, Bye, or blank.")
 
 
 def _has_result(delta: ResultDelta) -> bool:
@@ -102,17 +105,35 @@ def _coerce_numeric_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _append_note(existing: str, incoming: str) -> str:
+    if not incoming:
+        return existing
+    if not existing:
+        return incoming
+    return f"{existing}, {incoming}"
+
+
 def update_student_information(
     students_csv: Path, matches_csv: Path, output_csv: Path
 ) -> Path:
     """Update the Student_Information sheet using a completed next_matches.csv.
 
-    The match sheet must include the "Who Won" column with values W/B/T (or blank
-    on bye rows) plus per-colour homework correct/incorrect counts.
+    The match sheet must include the "Who Won" column with values W/B/T (or
+    blank/Bye) plus per-colour homework correct/incorrect counts. Notes are
+    appended to the rightmost "Notes" column in the student sheet.
     """
 
     students_df = pd.read_csv(students_csv)
     students_df.columns = students_df.columns.str.strip()
+
+    if "Notes" not in students_df.columns:
+        students_df["Notes"] = ""
+    else:
+        students_df["Notes"] = students_df["Notes"].fillna("").astype(str)
+    # Ensure Notes is the rightmost column
+    other_columns = [col for col in students_df.columns if col != "Notes"]
+    students_df = students_df[other_columns + ["Notes"]]
+
     students_df = _coerce_numeric_columns(students_df)
 
     matches_df = pd.read_csv(matches_csv)
@@ -130,19 +151,20 @@ def update_student_information(
 
     def apply_player(
         name: str,
+        color_field: str,
         result_delta: ResultDelta,
         correct_raw: str,
         incorrect_raw: str,
+        note_text: str,
     ) -> None:
         player_name = _normalise_name(name)
         correct_delta = _parse_homework(correct_raw)
         incorrect_delta = _parse_homework(incorrect_raw)
+        has_note = bool(_normalise_note(note_text))
 
         if not player_name:
-            if _has_result(result_delta) or correct_delta or incorrect_delta:
-                raise ValueError("Cannot record results without a player name.")
-            if any(_normalise_name(v) for v in [correct_raw, incorrect_raw]):
-                raise ValueError("Cannot record homework without a player name.")
+            if _has_result(result_delta) or correct_delta or incorrect_delta or has_note:
+                raise ValueError("Cannot record results, homework, or notes without a player name.")
             return
 
         if player_name not in name_to_index:
@@ -156,19 +178,29 @@ def update_student_information(
         students_df.at[student_index, "Correct Homework"] += correct_delta
         students_df.at[student_index, "Incorrect Homework"] += incorrect_delta
 
+        if has_note:
+            existing = students_df.at[student_index, "Notes"]
+            students_df.at[student_index, "Notes"] = _append_note(existing, _normalise_note(note_text))
+
     for _, row in matches_df.iterrows():
-        white_delta, black_delta = _parse_winner(row.get("Who Won"))
-        update_player(
+        white_delta, black_delta = _parse_who_won(row.get("Who Won"))
+        note_text = row.get("Notes", "")
+
+        apply_player(
             row.get("White Player"),
+            "# Times Played White",
             white_delta,
             row.get("White Homework Correct"),
             row.get("White Homework Incorrect"),
+            note_text,
         )
-        update_player(
+        apply_player(
             row.get("Black Player"),
+            "# Times Played Black",
             black_delta,
             row.get("Black Homework Correct"),
             row.get("Black Homework Incorrect"),
+            note_text,
         )
 
     output_csv.parent.mkdir(parents=True, exist_ok=True)
