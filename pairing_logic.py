@@ -138,6 +138,7 @@ OUTPUT_COLUMNS = [
     "White Homework Incorrect",
     "Black Homework Correct",
     "Black Homework Incorrect",
+    "Notes",
 ]
 
 
