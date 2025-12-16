@@ -31,6 +31,50 @@ REQUIRED_MATCH_COLUMNS = [
     "Notes",
 ]
 
+# Supported tokens for the Who Won column (case-insensitive).
+WHITE_RESULTS = {
+    "white",
+    "w",
+    "white win",
+    "white wins",
+    "white player",
+}
+BLACK_RESULTS = {
+    "black",
+    "b",
+    "black win",
+    "black wins",
+    "black player",
+}
+TIE_RESULTS = {
+    "tie",
+    "draw",
+    "t",
+    "d",
+    "tie game",
+    "draw game",
+    "0.5",
+    "1/2",
+    "1/2-1/2",
+}
+BYE_RESULTS = {"bye"}
+
+
+def _who_won_options_hint() -> str:
+    """Return a printable description of accepted Who Won tokens."""
+
+    def group(label: str, options: Iterable[str]) -> str:
+        return f"{label}: {', '.join(sorted(options))}"
+
+    groups = [
+        group("White", WHITE_RESULTS),
+        group("Black", BLACK_RESULTS),
+        group("Tie/Draw", TIE_RESULTS),
+        group("Bye", BYE_RESULTS),
+        "Blank",  # Blank values are also accepted.
+    ]
+    return "; ".join(groups)
+
 
 @dataclass
 class ResultDelta:
@@ -54,24 +98,32 @@ def _normalise_note(value) -> str:
 def _parse_who_won(raw: str) -> Tuple[ResultDelta, ResultDelta]:
     """Return per-colour deltas for a Who Won cell.
 
-    Accepts W/B/T synonyms. Blank or "Bye" values produce zero deltas to leave
-    win/loss/tie counts unchanged while still allowing colour tracking.
+    Accepts clear W/B/T synonyms. Blank or "Bye" values produce zero deltas to
+    leave win/loss/tie counts unchanged while still allowing colour tracking.
+    Accepted values (case-insensitive):
+    - White wins: White, W, White Win, White Wins, White Player
+    - Black wins: Black, B, Black Win, Black Wins, Black Player
+    - Ties: Tie, Draw, T, D, Tie Game, Draw Game, 0.5, 1/2, 1/2-1/2
+    - Byes: Bye or blank
     """
 
     value = "" if raw is None else str(raw).strip().lower()
     if not value:
         return ResultDelta(0, 0, 0), ResultDelta(0, 0, 0)
 
-    if value in {"white", "w", "1-0", "white win", "white player"}:
+    if value in WHITE_RESULTS:
         return ResultDelta(1, 0, 0), ResultDelta(0, 1, 0)
-    if value in {"black", "b", "0-1", "black win", "black player"}:
+    if value in BLACK_RESULTS:
         return ResultDelta(0, 1, 0), ResultDelta(1, 0, 0)
-    if value in {"tie", "draw", "t", "d", "0.5", "1/2", "1/2-1/2"}:
+    if value in TIE_RESULTS:
         return ResultDelta(0, 0, 1), ResultDelta(0, 0, 1)
-    if value in {"bye"}:
+    if value in BYE_RESULTS:
         return ResultDelta(0, 0, 0), ResultDelta(0, 0, 0)
 
-    raise ValueError("Who Won must be White, Black, Tie/Draw, Bye, or blank.")
+    raise ValueError(
+        "Who Won must be one of the allowed White, Black, Tie/Draw, Bye, or blank options. "
+        f"Accepted values: {_who_won_options_hint()}."
+    )
 
 
 def _has_result(delta: ResultDelta) -> bool:
@@ -118,9 +170,9 @@ def update_student_information(
 ) -> Path:
     """Update the Student_Information sheet using a completed next_matches.csv.
 
-    The match sheet must include the "Who Won" column with values W/B/T (or
-    blank/Bye) plus per-colour homework correct/incorrect counts. Notes are
-    appended to the rightmost "Notes" column in the student sheet.
+    The match sheet must include the "Who Won" column with values from
+    `_who_won_options_hint()` plus per-colour homework correct/incorrect counts.
+    Notes are appended to the rightmost "Notes" column in the student sheet.
     """
 
     students_df = pd.read_csv(students_csv)

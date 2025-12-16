@@ -23,7 +23,7 @@ Complete Loop Workflow
 ----------------------
 1. Upload the latest `Student_Information.csv` on the main page, optionally tweak the win/homework weights, and download the generated `next_matches.csv`.
 2. During/after the round, fill in the new columns for each pairing:
-   - `Who Won`: use White/Black/Tie (or W/B/T). Use `Bye` or leave blank for bye/not-played rows so win/loss/tie totals stay unchanged.
+   - `Who Won`: choose from the accepted values below. Use `Bye` or leave blank for bye/not-played rows so win/loss/tie totals stay unchanged.
    - `White Homework Correct/Incorrect` and `Black Homework Correct/Incorrect`: enter numeric counts, leaving blanks for zero.
    - `Notes`: free-form text to attach to both players; new notes are appended to any existing student notes.
 3. Visit `/update` ("Update Student Information" link in the UI) and upload the current `Student_Information.csv` alongside the completed `next_matches.csv`.
@@ -51,7 +51,14 @@ Flask Web App (Local)
 White Player,White Player Strength,Black Player,Black Player Strength,Who Won,White Homework Correct,White Homework Incorrect,Black Homework Correct,Black Homework Incorrect,Notes
 ```
 
-Use `W` for white wins, `B` for black wins, `T` for ties, `Bye` for a bye, and leave blank if the result is not recorded yet. Blank/Bye leaves the win/loss/tie columns unchanged while still tracking colour history.
+Use the following case-insensitive options for the `Who Won` column:
+
+- White win: `White`, `W`, `White Win`, `White Wins`, `White Player`
+- Black win: `Black`, `B`, `Black Win`, `Black Wins`, `Black Player`
+- Tie/Draw: `Tie`, `Draw`, `T`, `D`, `Tie Game`, `Draw Game`, `0.5`, `1/2`, `1/2-1/2`
+- Bye / not played: `Bye` or leave blank
+
+Blank/Bye leaves the win/loss/tie columns unchanged while still tracking colour history.
 
 Render Deployment
 -----------------
