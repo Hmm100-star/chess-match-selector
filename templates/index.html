@@ -54,12 +54,6 @@
               text-gray-700 dark:text-gray-200
             {% endif %}"
           >About</a>
-          <a
-            href="{{ github_url }}"
-            target="_blank"
-            rel="noopener"
-            class="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-center transition-all duration-300 hover:-translate-y-0.5 hover:bg-gray-200 hover:text-gray-900 hover:shadow-lg dark:hover:bg-gray-700 dark:hover:text-white sm:min-w-[140px] text-gray-700 dark:text-gray-200"
-          >GitHub</a>
         </div>
       </div>
     </header>
@@ -168,49 +162,6 @@
             </button>
           </div>
         </form>
-
-        <section class="mt-10 rounded-2xl border border-dashed border-gray-300 bg-gray-50/70 p-5 text-sm text-gray-700 transition-colors duration-300 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-200">
-          <h2 class="text-base font-semibold text-gray-900 transition-colors duration-300 dark:text-gray-100">
-            What's in the new next_matches.csv?
-          </h2>
-          <p class="mt-2 text-xs leading-relaxed text-gray-600 transition-colors duration-300 dark:text-gray-300">
-            Each pairing now includes a <strong>Who Won</strong> column plus homework correct/incorrect counts and shared notes. Fill those fields after a round,
-            then use the <a href="{{ url_for('update_page') }}" class="font-semibold text-indigo-600 hover:underline">Update Student Information</a> page to push the stats back into your master sheet.
-            Bye rows still award a colour to keep history accurate, but leaving <em>Who Won</em> blank or set to Bye keeps win/loss/tie totals unchanged.
-          </p>
-          <p class="mt-2 text-xs leading-relaxed text-gray-600 transition-colors duration-300 dark:text-gray-300">
-            Accepted values for <strong>Who Won</strong> (case-insensitive):
-            White win: White, W, White Win, White Wins, White Player. Black win: Black, B, Black Win, Black Wins, Black Player.
-            Tie/Draw: Tie, Draw, T, D, Tie Game, Draw Game, 0.5, 1/2, 1/2-1/2. Bye/not played: Bye or leave blank.
-          </p>
-        </section>
-
-        <section
-          aria-label="Helpful links"
-          class="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap"
-        >
-          <a
-            class="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-400 hover:text-indigo-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-indigo-400 dark:hover:text-indigo-300 dark:focus:ring-offset-gray-900"
-            href="{{ input_template_url }}"
-            target="_blank"
-            rel="noopener"
-            >View Input Template</a
-          >
-          <a
-            class="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-400 hover:text-indigo-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-indigo-400 dark:hover:text-indigo-300 dark:focus:ring-offset-gray-900"
-            href="{{ output_sample_url }}"
-            target="_blank"
-            rel="noopener"
-            >See Sample Output</a
-          >
-          <a
-            class="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-400 hover:text-indigo-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-indigo-400 dark:hover:text-indigo-300 dark:focus:ring-offset-gray-900"
-            href="{{ github_url }}"
-            target="_blank"
-            rel="noopener"
-            >GitHub Repository</a
-          >
-        </section>
 
         {% if output_exists %}
           <section class="mt-10 text-center">

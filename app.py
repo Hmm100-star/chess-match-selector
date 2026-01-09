@@ -79,6 +79,8 @@ def build_update_context(**overrides: Union[str, float, bool, None]) -> dict:
 def build_about_context(**overrides: Union[str, float, bool, None]) -> dict:
     context = {
         "error": None,
+        "input_template_url": INPUT_TEMPLATE_URL,
+        "output_sample_url": OUTPUT_SAMPLE_URL,
     }
     context.update(base_nav_context("about"))
     context.update(overrides)
