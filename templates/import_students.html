@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Import Students · {{ classroom.name }}{% endblock %}
+{% block content %}
+  <div class="mx-auto max-w-3xl rounded-3xl bg-white/90 p-8 shadow-2xl dark:bg-gray-800/90">
+    <h1 class="text-2xl font-semibold">Import Student_Information.csv</h1>
+    <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+      Upload an existing CSV to seed students and totals for {{ classroom.name }}.
+    </p>
+
+    <form class="mt-6 space-y-4" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+      <div>
+        <label class="text-sm font-semibold text-gray-700 dark:text-gray-200" for="file">CSV file</label>
+        <input
+          id="file"
+          name="file"
+          type="file"
+          accept=".csv"
+          required
+          class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm dark:border-gray-600 dark:bg-gray-900"
+        />
+      </div>
+      <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+        <input type="checkbox" name="replace_existing" />
+        Replace existing students in this class
+      </label>
+      <button
+        type="submit"
+        class="w-full rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500"
+      >Import students</button>
+    </form>
+  </div>
+{% endblock %}

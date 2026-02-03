@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Chess Match Selector{% endblock %}
+{% block content %}
+  <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+    <section class="rounded-3xl bg-white/90 p-6 shadow-lg dark:bg-gray-800/90">
+      <h1 class="text-2xl font-semibold">Welcome back, {{ teacher.username }}!</h1>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+        Choose a class to manage students, generate pairings, and record results.
+      </p>
+
+      <div class="mt-6 grid gap-4">
+        {% if classrooms %}
+          {% for classroom in classrooms %}
+            <a
+              href="{{ url_for('classroom_overview', classroom_id=classroom.id) }}"
+              class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm font-semibold text-gray-800 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-white dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            >
+              <div class="flex items-center justify-between">
+                <span>{{ classroom.name }}</span>
+                <span class="text-xs text-gray-500">{{ classroom.created_at.strftime('%Y-%m-%d') }}</span>
+              </div>
+            </a>
+          {% endfor %}
+        {% else %}
+          <p class="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/60">
+            No classes yet. Create your first class to get started.
+          </p>
+        {% endif %}
+      </div>
+    </section>
+
+    <aside class="rounded-3xl bg-white/90 p-6 shadow-lg dark:bg-gray-800/90">
+      <h2 class="text-lg font-semibold">Create a new class</h2>
+      <form class="mt-4 space-y-4" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <div>
+          <label class="text-sm font-semibold text-gray-700 dark:text-gray-200" for="classroom_name">
+            Class name
+          </label>
+          <input
+            id="classroom_name"
+            name="classroom_name"
+            type="text"
+            placeholder="e.g. Period 2 Chess"
+            class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm dark:border-gray-600 dark:bg-gray-900"
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          class="w-full rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500"
+        >Add class</button>
+      </form>
+      <div class="mt-6 text-xs text-gray-500 dark:text-gray-400">
+        Tip: Use one class per period or roster to keep results isolated.
+      </div>
+    </aside>
+  </div>
+{% endblock %}
