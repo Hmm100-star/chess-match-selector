@@ -30,7 +30,9 @@
                 <span class="text-xs text-gray-400">({{ match.black_strength or 'n/a' }})</span>
               </h2>
             </div>
-            <div class="text-xs text-gray-500">Last updated: {{ match.updated_at.strftime('%Y-%m-%d %H:%M') }}</div>
+            <div class="text-xs text-gray-500">
+              Last updated: {{ match.updated_at.strftime('%Y-%m-%d %H:%M') if match.updated_at else 'n/a' }}
+            </div>
           </div>
 
           <div class="mt-4 grid gap-4 md:grid-cols-3">

@@ -22,13 +22,24 @@ def build_rating_dataframe(
     students: Iterable[Student], win_weight: float, homework_weight: float
 ) -> Tuple[pd.DataFrame, List[int]]:
     rows: List[RatingRow] = []
+
+    def safe_int(value: Optional[int]) -> int:
+        if value is None:
+            return 0
+        return int(value)
+
     for student in students:
-        total_games = student.total_wins + student.total_losses + student.total_ties
-        win_rate = student.total_wins / total_games if total_games else 0
-        total_homework = student.homework_correct + student.homework_incorrect
-        homework_score = student.homework_correct / total_homework if total_homework else 0
+        total_wins = safe_int(student.total_wins)
+        total_losses = safe_int(student.total_losses)
+        total_ties = safe_int(student.total_ties)
+        total_games = total_wins + total_losses + total_ties
+        win_rate = total_wins / total_games if total_games else 0
+        homework_correct = safe_int(student.homework_correct)
+        homework_incorrect = safe_int(student.homework_incorrect)
+        total_homework = homework_correct + homework_incorrect
+        homework_score = homework_correct / total_homework if total_homework else 0
         rating = round((win_weight * win_rate) + (homework_weight * homework_score), 3)
-        color_diff = student.times_white - student.times_black
+        color_diff = safe_int(student.times_white) - safe_int(student.times_black)
         rows.append(
             RatingRow(
                 student_id=student.id,
