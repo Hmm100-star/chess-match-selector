@@ -44,7 +44,26 @@ INPUT_TEMPLATE_URL = (
 )
 GITHUB_URL = "https://github.com/Hmm100-star/chess-match-selector"
 
-Base.metadata.create_all(bind=engine)
+_tables_initialized = False
+
+
+def initialize_database() -> None:
+    """Best-effort table initialization.
+
+    In cloud deployments, database networking may be temporarily unavailable during
+    process startup. Deferring table creation prevents the WSGI import step from
+    crashing before the app can bind to a port.
+    """
+
+    global _tables_initialized
+    if _tables_initialized:
+        return
+
+    try:
+        Base.metadata.create_all(bind=engine)
+        _tables_initialized = True
+    except Exception:
+        logger.exception("Database initialization failed; will retry on next request")
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", secrets.token_hex(32))
@@ -56,6 +75,11 @@ if not logger.handlers:
         level=os.getenv("LOG_LEVEL", "INFO"),
         format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
     )
+
+
+@app.before_request
+def ensure_database_initialized() -> None:
+    initialize_database()
 
 
 def allowed_file(filename: str) -> bool:
