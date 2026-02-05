@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import csv
+import logging
 import os
 import secrets
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
@@ -18,6 +20,8 @@ from flask import (
     session,
     url_for,
 )
+from flask import has_request_context
+from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
@@ -45,6 +49,13 @@ Base.metadata.create_all(bind=engine)
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", secrets.token_hex(32))
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
+
+logger = logging.getLogger("chess_match_selector")
+if not logger.handlers:
+    logging.basicConfig(
+        level=os.getenv("LOG_LEVEL", "INFO"),
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    )
 
 
 def allowed_file(filename: str) -> bool:
@@ -88,6 +99,19 @@ def get_classroom_or_404(classroom_id: int, teacher_id: int) -> Classroom:
         if not classroom or classroom.teacher_id != teacher_id:
             abort(404)
         return classroom
+
+
+def log_exception(error: Exception, support_id: str) -> None:
+    extra = {"support_id": support_id}
+    if has_request_context():
+        extra.update(
+            {
+                "path": request.path,
+                "method": request.method,
+                "teacher_id": session.get("teacher_id"),
+            }
+        )
+    logger.exception("Unhandled application error", extra=extra)
 
 
 @app.context_processor
@@ -161,6 +185,15 @@ def login() -> str:
             return redirect(url_for("dashboard"))
 
     return render_template("login.html", error=error)
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(error: Exception):
+    if isinstance(error, HTTPException):
+        return error
+    support_id = uuid.uuid4().hex[:12]
+    log_exception(error, support_id)
+    return render_template("500.html", support_id=support_id), 500
 
 
 @app.route("/logout", methods=["POST"])

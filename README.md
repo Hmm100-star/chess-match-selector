@@ -41,6 +41,60 @@ Production (PythonAnywhere)
 3. Configure the WSGI file to point to `app:app`.
 4. Restart the web app.
 
+Production (Supabase Postgres)
+------------------------------
+1. Create a Supabase project and copy the **Connection string** for Postgres.
+2. Set `DATABASE_URL` to the Supabase connection string (include `sslmode=require` if not present).
+3. Deploy the app with `FLASK_ENV=production` to require the persistent database.
+4. On first boot, tables are created automatically by SQLAlchemy.
+
+Example `DATABASE_URL`:
+```
+postgresql+psycopg://<user>:<password>@<host>:5432/<db>?sslmode=require
+```
+
+Notes:
+- Use the Supabase pooler URL if you expect high concurrency.
+- Avoid SQLite in production because the filesystem may be ephemeral and it does not scale.
+
+Render + Supabase Quickstart
+----------------------------
+1. In Supabase, open **Project Settings → Database** and copy the Postgres connection string.
+2. In Render, open your **Web Service → Environment** settings:
+   - Add `DATABASE_URL` and paste the Supabase connection string.
+   - Add `FLASK_ENV=production`.
+   - Add `SECRET_KEY` with a strong random value.
+3. Ensure the connection string includes `sslmode=require` (Render requires SSL).
+4. Deploy; the app will create tables on first boot.
+
+Tip: If you see connection limits, switch to the Supabase pooler URL and redeploy.
+
+Supabase URL Rewrite Examples (SSL)
+-----------------------------------
+If Supabase gives you a URL like:
+
+```
+postgresql://postgres:[YOUR-PASSWORD]@db.aductepxsqnvsoverobc.supabase.co:5432/postgres
+```
+
+Use this app-friendly SQLAlchemy URL format:
+
+```
+postgresql+psycopg://postgres:[YOUR-PASSWORD]@db.aductepxsqnvsoverobc.supabase.co:5432/postgres?sslmode=require
+```
+
+Notes:
+- Keep `postgresql+psycopg://` so SQLAlchemy uses the `psycopg` driver.
+- If your password has special characters (for example `@`, `:`, `/`, or `?`), URL-encode it before saving the URL.
+- If the URL already has query parameters, append SSL mode with `&sslmode=require` instead of `?sslmode=require`.
+
+`SECRET_KEY` FAQ
+----------------
+- `SECRET_KEY` is a Flask security secret used to sign session cookies and CSRF tokens.
+- Set it to a long random value (for example: `python -c "import secrets; print(secrets.token_urlsafe(48))"`).
+- It does **not** connect to Supabase and does not need to match any Supabase secret.
+- Keep it private, store it in Render environment variables, and rotate it immediately if exposed.
+
 Security Notes
 --------------
 - Passwords are stored as salted hashes.
