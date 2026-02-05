@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Something went wrong{% endblock %}
+
+{% block content %}
+  <section class="rounded-3xl border border-rose-200 bg-rose-50/80 p-6 shadow-sm dark:border-rose-900/60 dark:bg-rose-900/30">
+    <h1 class="text-2xl font-semibold text-rose-700 dark:text-rose-200">
+      We hit an unexpected error
+    </h1>
+    <p class="mt-3 text-sm text-rose-700/90 dark:text-rose-100/80">
+      The request could not be completed. Please try again in a moment. If the issue persists,
+      contact support with the reference below so we can investigate.
+    </p>
+    <div class="mt-4 rounded-2xl border border-rose-200 bg-white/80 px-4 py-3 text-sm font-mono text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-100">
+      Support ID: {{ support_id }}
+    </div>
+    <a
+      href="{{ url_for('dashboard') }}"
+      class="mt-6 inline-flex items-center justify-center rounded-2xl bg-rose-600 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-rose-700"
+    >
+      Back to dashboard
+    </a>
+  </section>
+{% endblock %}

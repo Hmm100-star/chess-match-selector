@@ -41,6 +41,22 @@ Production (PythonAnywhere)
 3. Configure the WSGI file to point to `app:app`.
 4. Restart the web app.
 
+Production (Supabase Postgres)
+------------------------------
+1. Create a Supabase project and copy the **Connection string** for Postgres.
+2. Set `DATABASE_URL` to the Supabase connection string (include `sslmode=require` if not present).
+3. Deploy the app with `FLASK_ENV=production` to require the persistent database.
+4. On first boot, tables are created automatically by SQLAlchemy.
+
+Example `DATABASE_URL`:
+```
+postgresql+psycopg://<user>:<password>@<host>:5432/<db>?sslmode=require
+```
+
+Notes:
+- Use the Supabase pooler URL if you expect high concurrency.
+- Avoid SQLite in production because the filesystem may be ephemeral and it does not scale.
+
 Security Notes
 --------------
 - Passwords are stored as salted hashes.

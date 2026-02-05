@@ -15,6 +15,14 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_DB_URL = f"sqlite:///{DATA_DIR / 'chess_match.db'}"
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DB_URL)
+ENVIRONMENT = os.getenv("FLASK_ENV", "").lower()
+IS_PRODUCTION = ENVIRONMENT == "production"
+
+if IS_PRODUCTION and DATABASE_URL == DEFAULT_DB_URL:
+    raise RuntimeError(
+        "DATABASE_URL must be set to a persistent database (e.g., Supabase Postgres) "
+        "when running in production."
+    )
 
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, future=True, echo=False, connect_args=connect_args)
