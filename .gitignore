@@ -1,0 +1,10 @@
+Student_Information.csv
+next_matches.csv
+artifacts/
+__pycache__/
+*.pyc
+*.pyo
+outputs/
+uploads/
+data/
+.env

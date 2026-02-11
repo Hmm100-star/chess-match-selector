@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}About · Chess Match Selector{% endblock %}
+{% block content %}
+  <div class="rounded-3xl bg-white/90 p-8 shadow-2xl dark:bg-gray-800/90">
+    <h1 class="text-2xl font-semibold">About the Chess Match Selector</h1>
+    <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
+      This version stores your data in a database, supports multiple classes, and lets you record results directly in the app.
+      CSV import/export is still available for backups.
+    </p>
+
+    <div class="mt-6 grid gap-6 md:grid-cols-2">
+      <section class="rounded-2xl border border-gray-200 bg-gray-50 p-5 text-sm dark:border-gray-700 dark:bg-gray-900/60">
+        <h2 class="text-base font-semibold">Workflow</h2>
+        <ol class="mt-3 list-decimal space-y-2 pl-4 text-gray-600 dark:text-gray-300">
+          <li>Create a class and add or import students.</li>
+          <li>Start a new round, mark absences, and generate pairings.</li>
+          <li>Record winners, homework, and notes directly in the results page.</li>
+          <li>Export CSVs anytime for offline use or sharing.</li>
+        </ol>
+      </section>
+      <section class="rounded-2xl border border-gray-200 bg-gray-50 p-5 text-sm dark:border-gray-700 dark:bg-gray-900/60">
+        <h2 class="text-base font-semibold">Security & data</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-4 text-gray-600 dark:text-gray-300">
+          <li>Teacher login with hashed passwords.</li>
+          <li>Each class is isolated under a teacher account.</li>
+          <li>All results are editable with totals recomputed automatically.</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+{% endblock %}
