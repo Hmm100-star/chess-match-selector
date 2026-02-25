@@ -67,16 +67,37 @@ def evaluate_color_penalty(
 
 
 def select_pairings(
-    sorted_players: pd.DataFrame, rng: random.Random
+    sorted_players: pd.DataFrame,
+    rng: random.Random,
+    student_ids: Optional[List[int]] = None,
+    recent_opponents: Optional[Dict[frozenset[int], int]] = None,
+    rematch_window: int = 2,
+    avoid_recent_rematches: bool = True,
+    bye_counts: Optional[Dict[int, int]] = None,
+    rotate_byes: bool = True,
 ) -> Tuple[List[Tuple[int, int]], List[int]]:
-    """Generate pairings while respecting rating proximity and colour balance."""
+    """Generate pairings while respecting rating proximity, rematches, and colour balance."""
     available_indices = list(range(len(sorted_players)))
     matches: List[Tuple[int, int]] = []
     unpaired_indices: List[int] = []
+    recent_opponents = recent_opponents or {}
+    bye_counts = bye_counts or {}
 
     if len(available_indices) % 2 == 1:
-        lowest_index = available_indices.pop()
-        unpaired_indices.append(lowest_index)
+        if rotate_byes and student_ids:
+            def bye_priority(index: int) -> Tuple[int, float]:
+                student_id = student_ids[index]
+                return (
+                    int(bye_counts.get(student_id, 0)),
+                    float(sorted_players.at[index, "rating"]),
+                )
+
+            bye_index = min(available_indices, key=bye_priority)
+            available_indices.remove(bye_index)
+            unpaired_indices.append(bye_index)
+        else:
+            lowest_index = available_indices.pop()
+            unpaired_indices.append(lowest_index)
 
     while available_indices:
         current_index = available_indices.pop(0)
@@ -91,19 +112,33 @@ def select_pairings(
         for opponent_index in candidate_pool:
             player_diff = sorted_players.at[current_index, "color_diff"]
             opponent_diff = sorted_players.at[opponent_index, "color_diff"]
+            rating_gap = abs(
+                float(sorted_players.at[current_index, "rating"])
+                - float(sorted_players.at[opponent_index, "rating"])
+            )
 
             white_penalty = evaluate_color_penalty(player_diff, opponent_diff, True)
             black_penalty = evaluate_color_penalty(player_diff, opponent_diff, False)
 
             if white_penalty == black_penalty:
                 chosen_role = rng.choice(["player_white", "player_black"])
-                penalty = white_penalty
+                color_penalty = white_penalty
             elif white_penalty < black_penalty:
                 chosen_role = "player_white"
-                penalty = white_penalty
+                color_penalty = white_penalty
             else:
                 chosen_role = "player_black"
-                penalty = black_penalty
+                color_penalty = black_penalty
+
+            rematch_penalty = 0.0
+            if avoid_recent_rematches and student_ids and rematch_window > 0:
+                student_a = student_ids[current_index]
+                student_b = student_ids[opponent_index]
+                rounds_since = recent_opponents.get(frozenset({student_a, student_b}))
+                if rounds_since is not None and rounds_since <= rematch_window:
+                    rematch_penalty = 1000.0 / max(rounds_since, 1)
+
+            penalty = (rating_gap * 2.0) + color_penalty + rematch_penalty
 
             candidate_options.append((opponent_index, penalty, chosen_role))
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from db import Base
@@ -25,6 +25,15 @@ class Classroom(Base):
     id = Column(Integer, primary_key=True)
     teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=False)
     name = Column(String(200), nullable=False)
+    default_win_weight = Column(Integer, default=70, nullable=False)
+    default_homework_weight = Column(Integer, default=30, nullable=False)
+    default_homework_total_questions = Column(Integer, default=10, nullable=False)
+    default_homework_missing_policy = Column(String(20), default="zero", nullable=False)
+    default_homework_missing_penalty_wrong_pct = Column(Integer, default=100, nullable=False)
+    default_notation_required = Column(Boolean, default=True, nullable=False)
+    fair_no_recent_rematch = Column(Boolean, default=True, nullable=False)
+    fair_recent_rematch_window = Column(Integer, default=2, nullable=False)
+    fair_rotate_byes = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     teacher = relationship("Teacher", back_populates="classrooms")
@@ -45,6 +54,8 @@ class Student(Base):
     times_black = Column(Integer, default=0, nullable=False)
     homework_correct = Column(Integer, default=0, nullable=False)
     homework_incorrect = Column(Integer, default=0, nullable=False)
+    homework_score_sum = Column(Float, default=0.0, nullable=False)
+    homework_score_count = Column(Integer, default=0, nullable=False)
     notes = Column(Text, default="", nullable=False)
     active = Column(Boolean, default=True, nullable=False)
 
@@ -60,12 +71,21 @@ class Round(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     win_weight = Column(Integer, default=70, nullable=False)
     homework_weight = Column(Integer, default=30, nullable=False)
-    status = Column(String(50), default="open", nullable=False)
+    homework_total_questions = Column(Integer, default=10, nullable=False)
+    homework_missing_policy = Column(String(20), default="zero", nullable=False)
+    homework_missing_penalty_wrong_pct = Column(Integer, default=100, nullable=False)
+    notation_required = Column(Boolean, default=True, nullable=False)
+    status = Column(String(50), default="draft", nullable=False)
+    finalized_at = Column(DateTime)
+    finalized_by_teacher_id = Column(Integer, ForeignKey("teachers.id"))
 
     classroom = relationship("Classroom", back_populates="rounds")
     matches = relationship("Match", back_populates="round", cascade="all, delete-orphan")
     attendance_records = relationship(
         "Attendance", back_populates="round", cascade="all, delete-orphan"
+    )
+    audit_events = relationship(
+        "RoundAuditEvent", back_populates="round", cascade="all, delete-orphan"
     )
 
 
@@ -92,6 +112,8 @@ class Match(Base):
     black_strength = Column(String(20))
     result = Column(String(20))
     notes = Column(Text, default="", nullable=False)
+    white_notation_completed = Column(Boolean, default=False, nullable=False)
+    black_notation_completed = Column(Boolean, default=False, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     round = relationship("Round", back_populates="matches")
@@ -109,5 +131,20 @@ class HomeworkEntry(Base):
     white_incorrect = Column(Integer, default=0, nullable=False)
     black_correct = Column(Integer, default=0, nullable=False)
     black_incorrect = Column(Integer, default=0, nullable=False)
+    white_submitted = Column(Boolean, default=False, nullable=False)
+    black_submitted = Column(Boolean, default=False, nullable=False)
 
     match = relationship("Match", back_populates="homework_entry")
+
+
+class RoundAuditEvent(Base):
+    __tablename__ = "round_audit_events"
+
+    id = Column(Integer, primary_key=True)
+    round_id = Column(Integer, ForeignKey("rounds.id"), nullable=False)
+    teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=False)
+    action = Column(String(40), nullable=False)
+    details = Column(Text, default="", nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    round = relationship("Round", back_populates="audit_events")

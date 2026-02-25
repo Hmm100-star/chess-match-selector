@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import pandas as pd
 
@@ -36,8 +36,13 @@ def build_rating_dataframe(
         win_rate = total_wins / total_games if total_games else 0
         homework_correct = safe_int(student.homework_correct)
         homework_incorrect = safe_int(student.homework_incorrect)
+        homework_score_sum = float(getattr(student, "homework_score_sum", 0.0) or 0.0)
+        homework_score_count = safe_int(getattr(student, "homework_score_count", 0))
         total_homework = homework_correct + homework_incorrect
-        homework_score = homework_correct / total_homework if total_homework else 0
+        if homework_score_count > 0:
+            homework_score = homework_score_sum / homework_score_count
+        else:
+            homework_score = homework_correct / total_homework if total_homework else 0
         rating = round((win_weight * win_rate) + (homework_weight * homework_score), 3)
         color_diff = safe_int(student.times_white) - safe_int(student.times_black)
         rows.append(
@@ -68,11 +73,27 @@ def build_rating_dataframe(
 
 
 def generate_matches_for_students(
-    students: Iterable[Student], win_weight: float, homework_weight: float
+    students: Iterable[Student],
+    win_weight: float,
+    homework_weight: float,
+    recent_opponents: Optional[Dict[frozenset[int], int]] = None,
+    bye_counts: Optional[Dict[int, int]] = None,
+    rematch_window: int = 2,
+    avoid_recent_rematches: bool = True,
+    rotate_byes: bool = True,
 ) -> Tuple[List[Tuple[int, int]], List[int], pd.DataFrame, List[int]]:
     normalized_win, normalized_homework = normalize_weights(win_weight, homework_weight)
     df, id_order = build_rating_dataframe(students, normalized_win, normalized_homework)
-    matches, unpaired = select_pairings(df, rng=_random())
+    matches, unpaired = select_pairings(
+        df,
+        rng=_random(),
+        student_ids=id_order,
+        recent_opponents=recent_opponents,
+        rematch_window=rematch_window,
+        avoid_recent_rematches=avoid_recent_rematches,
+        bye_counts=bye_counts,
+        rotate_byes=rotate_byes,
+    )
     return matches, unpaired, df, id_order
 
 
@@ -134,12 +155,15 @@ def recalculate_totals(students: Iterable[Student], matches: Iterable[Match]) ->
         student.times_black = 0
         student.homework_correct = 0
         student.homework_incorrect = 0
+        student.homework_score_sum = 0.0
+        student.homework_score_count = 0
 
     for match in matches:
         white_id = match.white_student_id
         black_id = match.black_student_id
         result = (match.result or "").lower()
         homework: Optional[HomeworkEntry] = match.homework_entry
+        round_record = match.round
 
         if white_id and white_id in student_map:
             student_map[white_id].times_white += 1
@@ -156,10 +180,61 @@ def recalculate_totals(students: Iterable[Student], matches: Iterable[Match]) ->
             student_map[white_id].total_ties += 1
             student_map[black_id].total_ties += 1
 
+        def apply_homework(
+            student_id: Optional[int],
+            correct: int,
+            incorrect: int,
+            submitted: bool,
+        ) -> None:
+            if not student_id or student_id not in student_map:
+                return
+
+            student = student_map[student_id]
+            student.homework_correct += int(correct)
+            student.homework_incorrect += int(incorrect)
+
+            policy = getattr(round_record, "homework_missing_policy", "zero") or "zero"
+            penalty_wrong_pct = int(
+                getattr(round_record, "homework_missing_penalty_wrong_pct", 100) or 100
+            )
+            penalty_wrong_pct = max(0, min(100, penalty_wrong_pct))
+            total_questions = int(getattr(round_record, "homework_total_questions", 0) or 0)
+
+            if submitted:
+                if total_questions > 0:
+                    denominator = total_questions
+                else:
+                    denominator = int(correct) + int(incorrect)
+                if denominator > 0:
+                    score = max(0.0, min(1.0, float(correct) / float(denominator)))
+                    student.homework_score_sum += score
+                    student.homework_score_count += 1
+                return
+
+            if policy == "exclude":
+                return
+            if policy == "penalty":
+                score = 1 - (penalty_wrong_pct / 100.0)
+                student.homework_score_sum += max(0.0, min(1.0, score))
+                student.homework_score_count += 1
+                return
+
+            student.homework_score_sum += 0.0
+            student.homework_score_count += 1
+
         if homework:
-            if white_id and white_id in student_map:
-                student_map[white_id].homework_correct += homework.white_correct
-                student_map[white_id].homework_incorrect += homework.white_incorrect
-            if black_id and black_id in student_map:
-                student_map[black_id].homework_correct += homework.black_correct
-                student_map[black_id].homework_incorrect += homework.black_incorrect
+            apply_homework(
+                white_id,
+                homework.white_correct,
+                homework.white_incorrect,
+                bool(homework.white_submitted),
+            )
+            apply_homework(
+                black_id,
+                homework.black_correct,
+                homework.black_incorrect,
+                bool(homework.black_submitted),
+            )
+        else:
+            apply_homework(white_id, 0, 0, False)
+            apply_homework(black_id, 0, 0, False)
